@@ -1,5 +1,21 @@
 var TIMEOUT_IN_SECS = 3 * 60
 var TEMPLATE = '<h1><span class="js-timer-minutes">00</span>:<span class="js-timer-seconds">00</span></h1>'
+var ALERT_PERIOD_IN_SECS = 30
+const quotes = [
+    'Money often costs too much',
+    'The man who ain’t got an enemy is really poor',
+    'An enemy is anyone who tells the truth about you',
+    'Fools grow without watering',
+    'Two things are infinite: the universe and human stupidity;
+     and I'm not sure about the universe',
+     'Never expect people to treat you any better than you treat yourself',
+     'To be conscious that you are ignorant is a great step to knowledge'
+];
+
+function getMotivationAlerst() {
+  return quotes[Math.floor(Math.random() * quotes.length)];
+}
+
 
 function padZero(number){
   return ("00" + String(number)).slice(-2);
@@ -43,6 +59,11 @@ class Timer{
   }
 }
 
+runOutOfTime() {
+    return this.calculateSecsLeft() === 0
+  }
+}
+
 class TimerWidget{
   // IE does not support new style classes yet
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes
@@ -56,7 +77,18 @@ class TimerWidget{
     // adds HTML tag to current page
     this.timerContainer = document.createElement('div')
 
-    this.timerContainer.setAttribute("style", "height: 100px;")
+    var timerStyle =
+       "position: fixed;" +
+       "top: 30px;" +
+       "left: 18px;" +
+       "z-index: 9999;" +
+       "margin: 0px;" +
+       "color: green;" +
+       "background-color: lightcyan;" +
+       "padding: 2px;" +
+       "border-radius: 40px;";
+
+    this.timerContainer.setAttribute("style", timerStyle)
     this.timerContainer.innerHTML = TEMPLATE
 
     rootTag.insertBefore(this.timerContainer, rootTag.firstChild)
@@ -67,7 +99,7 @@ class TimerWidget{
   update(secsLeft){
     var minutes = Math.floor(secsLeft / 60);
     var seconds = secsLeft - minutes * 60;
-
+    if (secsLeft) {
     this.minutes_element.innerHTML = padZero(minutes)
     this.seconds_element.innerHTML = padZero(seconds)
   }
@@ -85,6 +117,8 @@ function main(){
   var timer = new Timer(TIMEOUT_IN_SECS)
   var timerWiget = new TimerWidget()
   var intervalId = null
+  var intervalId = null
+  var intervalAlert = null
 
   timerWiget.mount(document.body)
 
@@ -100,18 +134,19 @@ function main(){
       intervalId = null
     } else {
       timer.start()
+      if (timer.runOutOfTime()) {
+        alertTimer.start()
+      }
       intervalId = intervalId || setInterval(handleIntervalTick, 300)
+      intervalAlert = intervalAlert || setInterval(handleAlerts, 300)
     }
-  }
+}
 
   // https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API
   document.addEventListener("visibilitychange", handleVisibilityChange, false);
   handleVisibilityChange()
 }
 
-if (document.readyState === "complete" || document.readyState === "loaded") {
-  main();
-} else {
   // initialize timer when page ready for presentation
   window.addEventListener('DOMContentLoaded', main);
 }
